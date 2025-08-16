@@ -1,10 +1,11 @@
-const prisma = require("../lib/prisma");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { prisma, connectDb } = require("../lib/prisma");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here";
 
 exports.register = async (req, res) => {
+  await connectDb();
   const { name, email, password } = req.body;
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -38,6 +39,7 @@ exports.register = async (req, res) => {
 
 // Login
 exports.login = async (req, res) => {
+  await connectDb();
   const { email, password } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { email } });
