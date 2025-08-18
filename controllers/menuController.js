@@ -1,17 +1,15 @@
 const { prisma } = require("../lib/prisma");
 
 exports.getMenu = async (req, res) => {
-  const { category, query } = req.query;
+  const { category, query, limit } = req.query;
 
   try {
     const where = {};
 
-    // Filter by category ID
     if (category) {
       where.categoryId = category;
     }
 
-    // Search by name using 'contains' (MongoDB-compatible)
     if (query) {
       where.description = { contains: query, mode: "insensitive" }; // or use name if you add that field
     }
@@ -26,6 +24,7 @@ exports.getMenu = async (req, res) => {
           },
         },
       },
+      take: limit ? parseInt(limit, 10) : undefined,
     });
 
     // Flatten customizations if needed
