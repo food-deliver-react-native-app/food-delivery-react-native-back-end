@@ -1,6 +1,7 @@
-const { prisma } = require("../lib/prisma");
+const { prisma, connectDb } = require("../lib/prisma");
 
 exports.getMenu = async (req, res) => {
+  await connectDb();
   const { category, query, limit } = req.query;
 
   try {

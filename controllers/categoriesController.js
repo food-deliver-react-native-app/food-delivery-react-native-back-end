@@ -1,7 +1,8 @@
-const { prisma } = require("../lib/prisma");
+const { prisma, connectDb } = require("../lib/prisma");
 
 exports.getCategories = async (req, res) => {
   try {
+    await connectDb();
     const categories = await prisma.categories.findMany();
     res.status(200).json(categories);
   } catch (error) {
