@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
+    "build": "prisma generate && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "postinstall": "prisma generate"
   },
   "prisma": {
    "seed": "node prisma/seed.js"
