@@ -24,6 +24,7 @@ model Categories {
 model Menu {
   id             String                @id @default(auto()) @map("_id") @db.ObjectId
   description    String
+  name           String                @map("name")
   image_url      String
   rating         Int
   calories       Int
@@ -31,7 +32,7 @@ model Menu {
   price          Float
   categoryId     String                @db.ObjectId
   category       Categories            @relation(fields: [categoryId], references: [id])
-  customizations menu_Costumizations[] 
+  customizations menu_Costumizations[]
 }
 
 enum CustomizationType {

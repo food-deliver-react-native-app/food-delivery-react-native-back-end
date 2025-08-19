@@ -12,7 +12,7 @@ exports.getMenu = async (req, res) => {
     }
 
     if (query) {
-      where.description = { contains: query, mode: "insensitive" }; 
+      where.description = { contains: query, mode: "insensitive" };
     }
 
     const menus = await prisma.menu.findMany({
