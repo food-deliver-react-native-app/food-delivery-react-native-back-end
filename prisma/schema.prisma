@@ -12,6 +12,7 @@ model User {
   name     String
   email    String @unique
   password String
+  Cart     Cart[]
 }
 
 model Categories {
@@ -33,6 +34,7 @@ model Menu {
   categoryId     String                @db.ObjectId
   category       Categories            @relation(fields: [categoryId], references: [id])
   customizations menu_Costumizations[]
+  CartItem       CartItem[]
 }
 
 enum CustomizationType {
@@ -47,11 +49,12 @@ enum CustomizationType {
 }
 
 model Costumizations {
-  id    String                @id @default(auto()) @map("_id") @db.ObjectId
-  name  String
-  price Int
-  type  CustomizationType
-  menus menu_Costumizations[]
+  id                    String                  @id @default(auto()) @map("_id") @db.ObjectId
+  name                  String
+  price                 Int
+  type                  CustomizationType
+  menus                 menu_Costumizations[]
+  CartItemCustomization CartItemCustomization[]
 }
 
 model menu_Costumizations {
@@ -61,4 +64,35 @@ model menu_Costumizations {
 
   menu           Menu           @relation(fields: [menuId], references: [id])
   costumizations Costumizations @relation(fields: [costumizationId], references: [id])
+}
+
+model Cart {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String     @db.ObjectId
+  user      User       @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  cartId String @db.ObjectId
+  cart   Cart   @relation(fields: [cartId], references: [id])
+
+  menuId String @db.ObjectId
+  menu   Menu   @relation(fields: [menuId], references: [id])
+
+  quantity       Int                     @default(1)
+  // Optional if you allow customizations on cart items
+  customizations CartItemCustomization[]
+}
+
+model CartItemCustomization {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  cartItemId String   @db.ObjectId
+  cartItem   CartItem @relation(fields: [cartItemId], references: [id])
+
+  costumizationId String         @db.ObjectId
+  costumization   Costumizations @relation(fields: [costumizationId], references: [id])
 }
