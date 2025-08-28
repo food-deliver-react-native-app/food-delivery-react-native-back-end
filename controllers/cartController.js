@@ -1,4 +1,5 @@
 const { prisma, connectDb } = require("../lib/prisma");
+
 exports.addToCart = async (req, res) => {
   try {
     await connectDb();
@@ -8,6 +9,12 @@ exports.addToCart = async (req, res) => {
 
     if (!menuId) {
       return res.status(400).json({ error: "menuId is required" });
+    }
+
+    // ✅ Check if menu exists before continuing
+    const menu = await prisma.menu.findUnique({ where: { id: menuId } });
+    if (!menu) {
+      return res.status(404).json({ error: "Menu item not found" });
     }
 
     let cart = await prisma.cart.findFirst({
@@ -84,7 +91,7 @@ exports.getCart = async (req, res) => {
       include: {
         items: {
           include: {
-            menu: true, 
+            menu: true,
             customizations: { include: { costumization: true } }, // include customization details
           },
         },
@@ -99,5 +106,70 @@ exports.getCart = async (req, res) => {
   } catch (error) {
     console.error("❌ Error fetching cart:", error);
     return res.status(500).json({ error: "Failed to fetch cart" });
+  }
+};
+exports.deleteCartItem = async (req, res) => {
+  try {
+    await connectDb();
+
+    const userId = req.user.id;
+    const { cartItemId, menuId } = req.body;
+
+    if (!cartItemId) {
+      return res.status(400).json({ error: "cartItemId is required" });
+    }
+
+    // Find the cart item and ensure it belongs to the user
+    const item = await prisma.cartItem.findFirst({
+      where: {
+        id: cartItemId,
+        cart: {
+          userId,
+        },
+        ...(menuId ? { menuId } : {}), // add menuId filter only if provided
+      },
+    });
+
+    if (!item) {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+
+    if (!menuId) {
+      // One-click delete: delete the item and its customizations immediately
+      await prisma.cartItemCustomization.deleteMany({
+        where: { cartItemId },
+      });
+
+      await prisma.cartItem.delete({
+        where: { id: cartItemId },
+      });
+
+      return res.status(200).json({ success: "Item deleted from cart" });
+    }
+
+    // menuId is provided → decrease quantity or delete if quantity === 1
+    if (item.quantity > 1) {
+      const updatedItem = await prisma.cartItem.update({
+        where: { id: cartItemId },
+        data: { quantity: { decrement: 1 } },
+      });
+
+      return res
+        .status(200)
+        .json({ success: "Quantity decreased", item: updatedItem });
+    } else {
+      await prisma.cartItemCustomization.deleteMany({
+        where: { cartItemId },
+      });
+
+      await prisma.cartItem.delete({
+        where: { id: cartItemId },
+      });
+
+      return res.status(200).json({ success: "Item removed from cart" });
+    }
+  } catch (error) {
+    console.error("❌ Error updating/deleting cart item:", error);
+    return res.status(500).json({ error: "Failed to update/delete cart item" });
   }
 };
