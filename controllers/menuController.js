@@ -2,9 +2,34 @@ const { prisma, connectDb } = require("../lib/prisma");
 
 exports.getMenu = async (req, res) => {
   await connectDb();
-  const { category, query, limit } = req.query;
+  const { category, query, limit, id } = req.query;
 
   try {
+    if (id) {
+      const menuItem = await prisma.menu.findUnique({
+        where: { id: String(id) },
+        include: {
+          category: true,
+          customizations: {
+            include: {
+              costumizations: true,
+            },
+          },
+        },
+      });
+
+      if (!menuItem) {
+        return res.status(404).json({ error: "Menu item not found" });
+      }
+
+      const formattedMenuItem = {
+        ...menuItem,
+        customizations: menuItem.customizations.map((mc) => mc.costumizations),
+      };
+
+      return res.status(200).json(formattedMenuItem);
+    }
+
     const where = {};
 
     if (category) {
@@ -31,7 +56,6 @@ exports.getMenu = async (req, res) => {
       take: limit ? parseInt(limit, 10) : undefined,
     });
 
-    // Flatten customizations if needed
     const formattedMenus = menus.map((menu) => ({
       ...menu,
       customizations: menu.customizations.map((mc) => mc.costumizations),

@@ -11,7 +11,6 @@ exports.addToCart = async (req, res) => {
       return res.status(400).json({ error: "menuId is required" });
     }
 
-    // ✅ Check if menu exists before continuing
     const menu = await prisma.menu.findUnique({ where: { id: menuId } });
     if (!menu) {
       return res.status(404).json({ error: "Menu item not found" });
@@ -119,14 +118,13 @@ exports.deleteCartItem = async (req, res) => {
       return res.status(400).json({ error: "cartItemId is required" });
     }
 
-    // Find the cart item and ensure it belongs to the user
     const item = await prisma.cartItem.findFirst({
       where: {
         id: cartItemId,
         cart: {
           userId,
         },
-        ...(menuId ? { menuId } : {}), // add menuId filter only if provided
+        ...(menuId ? { menuId } : {}),
       },
     });
 
@@ -135,7 +133,6 @@ exports.deleteCartItem = async (req, res) => {
     }
 
     if (!menuId) {
-      // One-click delete: delete the item and its customizations immediately
       await prisma.cartItemCustomization.deleteMany({
         where: { cartItemId },
       });
@@ -147,7 +144,6 @@ exports.deleteCartItem = async (req, res) => {
       return res.status(200).json({ success: "Item deleted from cart" });
     }
 
-    // menuId is provided → decrease quantity or delete if quantity === 1
     if (item.quantity > 1) {
       const updatedItem = await prisma.cartItem.update({
         where: { id: cartItemId },
